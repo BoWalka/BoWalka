@@ -1,17 +1,14 @@
-   Hi, I’m @BoWalka
+   @BoWalka
      master of the hidden
      puzzle highlights books
      found in dentist offices.
    I’m interested in ...
-     indentation and
-     best practices.
      Learning MegaPyPy
-     and Linux 2 Turbo
+     and Linux 2 Turbo..
   I’m currently learning ...
-     Windows 98
-     Logical falacies and the
-     urge not to tell people
-     about them. And
+     Windows 98-ng
+     Logical_falacies and the
+     "urge to tell people",also
      logical falacies
   I’m looking to collaborate on ..
     logical falacies
