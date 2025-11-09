@@ -60,6 +60,18 @@ body {
 .hidden { display: none; } /* Utility: Toggle visibility */
 #portraitCanvas { border: 1px solid #00D4FF; border-radius: 8px; margin-top: 1rem; } /* Visual feedback */
 
+/* Form: Inline, responsive inputs */
+#inputForm { display: flex; flex-direction: column; gap: 1rem; max-width: 400px; margin: 0 auto 2rem; }
+#inputForm label { font-weight: 600; color: #00D4FF; }
+#inputForm input { padding: 0.5rem; background: rgba(255,255,255,0.1); border: 1px solid #00D4FF; border-radius: 4px; color: #fff; }
+#inputForm input::placeholder { color: rgba(255,255,255,0.6); }
+
+/* Thumbs: 3-col grid on desktop, stack mobile */
+.thumbs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; max-width: 400px; margin: 2rem auto; }
+.thumb-canvas { border: 2px solid #00D4FF; border-radius: 8px; cursor: pointer; transition: transform 0.3s; width: 100px; height: 100px; }
+.thumb-canvas:hover, .thumb-canvas:focus-visible { transform: scale(1.1); outline: 2px solid #fff; }
+.thumb-label { text-align: center; font-size: 0.9rem; margin-top: 0.5rem; }
+
 /* Footer: Bottom credit */
 footer { text-align: center; padding: 2rem; background: rgba(0,0,0,0.5); opacity: 0.7; }
 
