@@ -1,1 +1,34 @@
-  Lets's be honest, I don't know what the ffuck I'm doing half the time but it works. If you're like me and shit just sucks some days, then man are you gonna really be disappointed when it sucks more. My philosophy is be good at it. What it is is entirly missspeled and full of errers. But that shit doesn't really matter. You couldn't fly a cadillac over a line of Evil Kneivel's, but he could. Have Chuck Norris get kicked by a giant bow-flex and Jeanne Claude willw rite code for us now that's pretty neat. So what is it that leads your eyes to be reading this is easy. You are the treasure you seek. King, pass this to 5 homies on gang. Ladies, stay classy. Kids, fuck off. Just kidding kids are cool if they're house broken. Well, this isn't a very good bio I'm not sure how woke most of github is but they stopped letting me use co-pilot after a couple hours. Got kicked out of chatgpt, and gemini has a no contact restraining order against me. Grok is the only one who will stilll answer the phonne. Well that's about it glad you stuck around for the end of the story. Feel free to pay me money to do things that you maybe cant or dont want to do. I get shit done. period. Thanks (*insert unpleasent noises)
+# Bowalka Landing Page
+
+xAI-themed portfolio landing: Hero, links, free portrait gen. Fast, responsive, a11y-focused.
+
+## Quick Start
+1. Clone: `git clone https://github.com/YOURUSER/bowalka.git`
+2. Edit: Replace hrefs in index.html.
+3. Local: Open index.html or VS Code Live Server.
+4. Deploy: `git add . && git commit -m "update" && git push` – live on bowalka.com.
+
+## Features
+- **Theme**: Dark cosmic (xAI-inspired: #00D4FF accents).
+- **Responsive**: Mobile-first grid/flex.
+- **A11y**: ARIA labels, focus rings, reduced-motion.
+- **Rewards**: JS canvas portrait gen (download PNG).
+- **Perf**: <1s load; minify CSS/JS.
+- **Security**: CSP meta; HTTPS via GitHub.
+
+## Customization
+- Add links: Duplicate `<a class="card">` in grid.
+- Portrait: Tweak script.js arc/fill for styles.
+- Analytics: Add GA script in `<head>`.
+
+## License
+MIT License – free use/modify. © 2025 Bowalka. Made with love - bowalka.
+
+## Credits
+- Fonts: Inter (Google, Apache 2.0).
+- Inspired: grok.x.ai palette/UX.
+- Build: Vanilla HTML/CSS/JS (MDN docs).
+
+Issues? Open GitHub issue.
+
+Why: GitHub renders Markdown; serves as full doc.
