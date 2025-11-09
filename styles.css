@@ -60,6 +60,11 @@ body {
 .hidden { display: none; } /* Utility: Toggle visibility */
 #portraitCanvas { border: 1px solid #00D4FF; border-radius: 8px; margin-top: 1rem; } /* Visual feedback */
 
+.message-display { text-align: center; padding: 2rem; background: rgba(0,212,255,0.1); border-radius: 12px; }
+.message-display h3 { color: #00D4FF; margin-bottom: 1rem; }
+.message-display p { font-size: 1.2rem; font-style: italic; margin-bottom: 1rem; line-height: 1.5; }
+#copyBtn { padding: 0.5rem 1rem; background: #00D4FF; color: #000; border: none; border-radius: 4px; cursor: pointer; }
+
 /* Form: Inline, responsive inputs */
 #inputForm { display: flex; flex-direction: column; gap: 1rem; max-width: 400px; margin: 0 auto 2rem; }
 #inputForm label { font-weight: 600; color: #00D4FF; }

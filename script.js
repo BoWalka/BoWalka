@@ -34,120 +34,113 @@ window.addEventListener('scroll', () => { // Throttle implicit via requestAnim
   });
 }, { passive: true }); // Perf: no block
 
-// Input Form: Handle submit, extract chars, gen 3 attempts
-const form = document.getElementById('inputForm');
-const thumbsContainer = document.getElementById('thumbsContainer');
-const canvas = document.getElementById('portraitCanvas');
-const downloadLink = document.getElementById('downloadLink');
-const ctx = canvas.getContext('2d');
+// Inspirational Message Algo: Neutral, bias-free gen
+// Algo: Name[0] → theme (action/growth/reflect); Age bucket → intensity (spark/drive/wisdom); Color → tone (energy/calm/balance).
+// Templates: 9 combos (3x3) w/ placeholders; procedural insert for personal/agnostic vibe.
+// Sources: Neutral inspo patterns (e.g., growth mindset, no creed/demog refs).
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault(); // No page reload
+const form = document.getElementById('inputForm');
+const thumbsContainer = document.getElementById('thumbsContainer'); // Repurpose as msg display
+const canvas = document.getElementById('portraitCanvas'); // Hide/unuse
+const downloadLink = document.getElementById('downloadLink'); // Repurpose as "Copy/Share"
+canvas.classList.add('hidden'); // Perma-hide
+
+// Maps: Expandable, neutral
+const nameThemes = { // First letter buckets (A=0, etc.)
+  'a': 'action', 'b': 'action', 'c': 'action', 'd': 'action',
+  'e': 'growth', 'f': 'growth', 'g': 'growth', 'h': 'growth',
+  'i': 'reflect', 'j': 'reflect', 'k': 'reflect', 'l': 'reflect',
+  // ... z: cycle or default 'action'
+};
+const ageBuckets = age => age < 25 ? 'spark' : age <= 50 ? 'drive' : 'wisdom'; // Intensity levels
+const colorTones = {
+  'red': 'energy', 'orange': 'energy', 'yellow': 'energy',
+  'green': 'balance', 'blue': 'calm', 'purple': 'calm',
+  // Defaults: 'balance'
+};
+
+// Templates: 3 themes x 3 intensities x 3 tones = 27; sample 9 here, rand select
+const templates = {
+  action: {
+    spark: { energy: 'Ignite your {name} fire: Take one bold step today—momentum builds worlds.',
+             balance: 'Balance your {name} path: A single choice shifts the horizon.',
+             calm: 'With calm {name} focus, act now—the ripple starts here.' },
+    drive: { energy: 'Fuel your {name} drive: Push boundaries; every effort echoes forward.',
+             balance: 'Steady {name} drive: Align steps with purpose, watch clarity emerge.',
+             calm: 'In quiet drive, {name} thrives: One measured move unlocks tomorrow.' },
+    wisdom: { energy: 'Channel {name} wisdom into action: Legacy sparks from today\'s spark.',
+              balance: 'Wise {name} action: Harmonize experience with intent for lasting flow.',
+              calm: 'Serene {name} action: Let insight guide—peaceful steps shape eternity.' }
+  },
+  growth: {
+    spark: { energy: 'Bloom as {name}: Nurture your spark—growth awaits the curious mind.',
+             balance: 'Gentle {name} growth: Root in balance, reach for untapped potential.',
+             calm: 'In {name} calm, grow: Whispers of progress fill the patient soul.' },
+    drive: { energy: 'Fuel your {name} growth: Push boundaries; every effort echoes forward.',
+             balance: 'Steady {name} growth: Align steps with purpose, watch clarity emerge.',
+             calm: 'In quiet growth, {name} thrives: One measured move unlocks tomorrow.' },
+    wisdom: { energy: 'Channel {name} wisdom into growth: Legacy sparks from today\'s spark.',
+              balance: 'Wise {name} growth: Harmonize experience with intent for lasting flow.',
+              calm: 'Serene {name} growth: Let insight guide—peaceful steps shape eternity.' }
+  },
+  reflect: {
+    spark: { energy: 'Reflect with {name} spark: Insights ignite paths unseen.',
+             balance: 'Balanced {name} reflection: Clarity blooms in mindful pause.',
+             calm: 'Calm {name} reflection: Still waters reveal the deepest truths.' },
+    drive: { energy: 'Fuel your {name} reflection: Push boundaries; every effort echoes forward.',
+             balance: 'Steady {name} reflection: Align steps with purpose, watch clarity emerge.',
+             calm: 'In quiet reflection, {name} thrives: One measured move unlocks tomorrow.' },
+    wisdom: { energy: 'Channel {name} wisdom into reflection: Legacy sparks from today\'s spark.',
+              balance: 'Wise {name} reflection: Harmonize experience with intent for lasting flow.',
+              calm: 'Serene {name} reflection: Let insight guide—peaceful steps shape eternity.' }
+  }
+};
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
   const name = document.getElementById('nameInput').value.trim();
   const age = parseInt(document.getElementById('ageInput').value);
   const color = document.getElementById('colorInput').value.trim().toLowerCase();
   
-  if (!name || !age || !color) return alert('Fill all fields!'); // Basic validate
+  if (!name || !age || !color) return alert('Fill all fields!');
   
-  // Extract first chars: name letter, age first digit, color letter
-  const nameChar = name[0].toLowerCase();
-  const ageChar = age.toString()[0]; // First digit as "char"
-  const colorChar = color[0];
-  const chars = [nameChar, ageChar, colorChar];
+  const themeKey = nameThemes[name[0].toLowerCase()] || 'action'; // Default neutral
+  const intensity = ageBuckets(age);
+  const tone = colorTones[color] || 'balance';
   
-  // Clear prev thumbs
-  thumbsContainer.innerHTML = '';
+  // Rand select from template group (if multiple per combo)
+  const msgObj = templates[themeKey][intensity][tone];
+  let message = msgObj; // Single for now
+  message = message.replace('{name}', name); // Personalize w/o bias
+  
+  // Display: Clear, show msg in thumbsContainer
+  thumbsContainer.innerHTML = `
+    <div class="message-display">
+      <h3>Your Message Today</h3>
+      <p aria-live="polite">${message}</p>
+      <button id="copyBtn">Copy to Share</button>
+    </div>
+  `;
   thumbsContainer.classList.remove('hidden');
   
-  // Gen 3 attempts: Each composites 3 images (one per char)
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    const attemptSeed = `${name}${age}${color}${attempt}`; // Vary for uniqueness
-    const images = await Promise.all(chars.map(async (char, idx) => {
-      // Robohash API: Free robot "portrait element" seeded w/ char + cosmic theme
-      // I chose: Robots as xAI "elements" – fun, thematic; size scales w/ age
-      const size = Math.min(100 + (age * 2), 200); // Age influences scale (1-150 → 102-400px, but cap)
-      const query = `${char}cosmic`; // Pick: Cosmic robot for [char] vibe
-      const imgUrl = `https://robohash.org/${query}?size=${size}x${size}&set=set2&bgset=bg1`; // Set2: robots; bg1: cosmic-ish
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // For canvas tainting
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(createFallback(char, size)); // Fallback if API fail
-        img.src = imgUrl;
-      });
-    }));
-    
-    // Composite: Layer 3 images on canvas (triad layout, tint w/ color)
-    const compositeCanvas = document.createElement('canvas');
-    compositeCanvas.width = 300; compositeCanvas.height = 300;
-    const compCtx = compositeCanvas.getContext('2d');
-    
-    // Bg: Cosmic gradient tinted w/ fav color
-    const hue = color === 'red' ? 0 : color === 'blue' ? 240 : 120; // Simple hue map; expand as needed
-    compCtx.fillStyle = `hsl(${hue}, 50%, 5%)`; // Dark tint
-    compCtx.fillRect(0, 0, 300, 300);
-    
-    // Layer images: Triangle pos, scale down
-    images.forEach((img, idx) => {
-      const x = 50 + (idx * 100); const y = 50 + (idx * 50); // Staggered
-      compCtx.drawImage(img, x, y, 100, 100); // Fixed thumb size
+  // Copy handler
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    navigator.clipboard.writeText(message).then(() => {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied! ✨';
+      setTimeout(() => btn.textContent = 'Copy to Share', 2000);
     });
-    
-    // Add text: Initials overlay
-    compCtx.fillStyle = color; // Fav color text
-    compCtx.font = 'bold 20px Inter';
-    compCtx.fillText(`${nameChar}${ageChar}${colorChar}`, 10, 280);
-    
-    // Thumb display: Click to select
-    const thumb = document.createElement('canvas');
-    thumb.width = 100; thumb.height = 100; thumb.className = 'thumb-canvas';
-    const thumbCtx = thumb.getContext('2d');
-    thumbCtx.drawImage(compositeCanvas, 0, 0, 100, 100);
-    
-    const label = document.createElement('div');
-    label.className = 'thumb-label';
-    label.textContent = `Attempt ${attempt}`;
-    label.setAttribute('aria-label', `Select attempt ${attempt} portrait`);
-    
-    const wrapper = document.createElement('div');
-    wrapper.append(thumb, label);
-    thumbsContainer.appendChild(wrapper);
-    
-    // Click handler: Set as main, download
-    thumb.addEventListener('click', () => {
-      canvas.width = 300; canvas.height = 300;
-      ctx.drawImage(compositeCanvas, 0, 0);
-      canvas.classList.remove('hidden');
-      downloadLink.href = canvas.toDataURL('image/png');
-      downloadLink.classList.remove('hidden');
-      downloadLink.textContent = `Download Attempt ${attempt}`;
-      // A11y announce
-      const announce = document.createElement('div');
-      announce.setAttribute('aria-live', 'polite');
-      announce.textContent = `Selected attempt ${attempt}. Ready to download.`;
-      form.appendChild(announce);
-      setTimeout(() => announce.remove(), 3000);
-    });
-  }
+  });
   
-  console.log('Generated 3 portrait attempts from inputs');
+  // A11y announce
+  const announce = document.createElement('div');
+  announce.setAttribute('aria-live', 'assertive');
+  announce.textContent = `Message generated: ${message}`;
+  form.appendChild(announce);
+  setTimeout(() => announce.remove(), 10000); // Long read
+  
+  console.log(`Gen msg: ${themeKey}/${intensity}/${tone} → "${message}"`);
 });
-
-// Fallback: Simple canvas draw if API fails
-function createFallback(char, size) {
-  const img = document.createElement('canvas');
-  img.width = img.height = size;
-  const fCtx = img.getContext('2d');
-  fCtx.fillStyle = '#00D4FF';
-  fCtx.beginPath();
-  fCtx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
-  fCtx.fill();
-  fCtx.fillStyle = '#000';
-  fCtx.font = `${size/4}px Inter`;
-  fCtx.textAlign = 'center';
-  fCtx.fillText(char, size/2, size/2 + size/8);
-  return img;
-}
 
 // Perf: Preload check (optional PWA stub – expand later)
 if ('serviceWorker' in navigator) {
