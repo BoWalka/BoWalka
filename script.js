@@ -34,58 +34,120 @@ window.addEventListener('scroll', () => { // Throttle implicit via requestAnim
   });
 }, { passive: true }); // Perf: no block
 
-// Rewarding Element: Free Portrait Gen – Procedural avatar (xAI blue/circle motif)
-const genBtn = document.getElementById('genPortrait');
+// Input Form: Handle submit, extract chars, gen 3 attempts
+const form = document.getElementById('inputForm');
+const thumbsContainer = document.getElementById('thumbsContainer');
 const canvas = document.getElementById('portraitCanvas');
 const downloadLink = document.getElementById('downloadLink');
-const ctx = canvas.getContext('2d'); // 2D context for draw
+const ctx = canvas.getContext('2d');
 
-genBtn.addEventListener('click', () => {
-  // Clear & gen: Random cosmic portrait (circle face + particles)
-  ctx.clearRect(0, 0, canvas.width, canvas.height); // Reset
-  ctx.fillStyle = '#0a0a0a'; // Dark bg
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  // Face: Simple circle w/ gradient
-  const gradient = ctx.createRadialGradient(150, 150, 0, 150, 150, 150);
-  gradient.addColorStop(0, '#00D4FF'); // xAI blue core
-  gradient.addColorStop(1, '#000421'); // Fade to cosmic
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(150, 150, 120, 0, 2 * Math.PI); // Circle "head"
-  ctx.fill();
-
-  // Eyes: Two white dots
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.arc(120, 130, 10, 0, 2 * Math.PI); // Left eye
-  ctx.arc(180, 130, 10, 0, 2 * Math.PI); // Right
-  ctx.fill();
-
-  // Particles: 5 random blue dots on face
-  for (let i = 0; i < 5; i++) {
-    ctx.fillStyle = `rgba(0, 212, 255, ${Math.random()})`; // Var opacity
-    ctx.beginPath();
-    ctx.arc(Math.random() * 300, Math.random() * 300, Math.random() * 3 + 1, 0, 2 * Math.PI);
-    ctx.fill();
+form.addEventListener('submit', async (e) => {
+  e.preventDefault(); // No page reload
+  const name = document.getElementById('nameInput').value.trim();
+  const age = parseInt(document.getElementById('ageInput').value);
+  const color = document.getElementById('colorInput').value.trim().toLowerCase();
+  
+  if (!name || !age || !color) return alert('Fill all fields!'); // Basic validate
+  
+  // Extract first chars: name letter, age first digit, color letter
+  const nameChar = name[0].toLowerCase();
+  const ageChar = age.toString()[0]; // First digit as "char"
+  const colorChar = color[0];
+  const chars = [nameChar, ageChar, colorChar];
+  
+  // Clear prev thumbs
+  thumbsContainer.innerHTML = '';
+  thumbsContainer.classList.remove('hidden');
+  
+  // Gen 3 attempts: Each composites 3 images (one per char)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const attemptSeed = `${name}${age}${color}${attempt}`; // Vary for uniqueness
+    const images = await Promise.all(chars.map(async (char, idx) => {
+      // Robohash API: Free robot "portrait element" seeded w/ char + cosmic theme
+      // I chose: Robots as xAI "elements" – fun, thematic; size scales w/ age
+      const size = Math.min(100 + (age * 2), 200); // Age influences scale (1-150 → 102-400px, but cap)
+      const query = `${char}cosmic`; // Pick: Cosmic robot for [char] vibe
+      const imgUrl = `https://robohash.org/${query}?size=${size}x${size}&set=set2&bgset=bg1`; // Set2: robots; bg1: cosmic-ish
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // For canvas tainting
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(createFallback(char, size)); // Fallback if API fail
+        img.src = imgUrl;
+      });
+    }));
+    
+    // Composite: Layer 3 images on canvas (triad layout, tint w/ color)
+    const compositeCanvas = document.createElement('canvas');
+    compositeCanvas.width = 300; compositeCanvas.height = 300;
+    const compCtx = compositeCanvas.getContext('2d');
+    
+    // Bg: Cosmic gradient tinted w/ fav color
+    const hue = color === 'red' ? 0 : color === 'blue' ? 240 : 120; // Simple hue map; expand as needed
+    compCtx.fillStyle = `hsl(${hue}, 50%, 5%)`; // Dark tint
+    compCtx.fillRect(0, 0, 300, 300);
+    
+    // Layer images: Triangle pos, scale down
+    images.forEach((img, idx) => {
+      const x = 50 + (idx * 100); const y = 50 + (idx * 50); // Staggered
+      compCtx.drawImage(img, x, y, 100, 100); // Fixed thumb size
+    });
+    
+    // Add text: Initials overlay
+    compCtx.fillStyle = color; // Fav color text
+    compCtx.font = 'bold 20px Inter';
+    compCtx.fillText(`${nameChar}${ageChar}${colorChar}`, 10, 280);
+    
+    // Thumb display: Click to select
+    const thumb = document.createElement('canvas');
+    thumb.width = 100; thumb.height = 100; thumb.className = 'thumb-canvas';
+    const thumbCtx = thumb.getContext('2d');
+    thumbCtx.drawImage(compositeCanvas, 0, 0, 100, 100);
+    
+    const label = document.createElement('div');
+    label.className = 'thumb-label';
+    label.textContent = `Attempt ${attempt}`;
+    label.setAttribute('aria-label', `Select attempt ${attempt} portrait`);
+    
+    const wrapper = document.createElement('div');
+    wrapper.append(thumb, label);
+    thumbsContainer.appendChild(wrapper);
+    
+    // Click handler: Set as main, download
+    thumb.addEventListener('click', () => {
+      canvas.width = 300; canvas.height = 300;
+      ctx.drawImage(compositeCanvas, 0, 0);
+      canvas.classList.remove('hidden');
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.classList.remove('hidden');
+      downloadLink.textContent = `Download Attempt ${attempt}`;
+      // A11y announce
+      const announce = document.createElement('div');
+      announce.setAttribute('aria-live', 'polite');
+      announce.textContent = `Selected attempt ${attempt}. Ready to download.`;
+      form.appendChild(announce);
+      setTimeout(() => announce.remove(), 3000);
+    });
   }
-
-  // Reveal & download setup
-  canvas.classList.remove('hidden'); // Show canvas
-  downloadLink.href = canvas.toDataURL('image/png'); // Base64 for download
-  downloadLink.classList.remove('hidden'); // Show link
-  downloadLink.textContent = 'Download Your xAI Portrait'; // Dynamic text
-  genBtn.textContent = 'Regenerate 🎨'; // Feedback loop
-
-  // A11y: Announce to screen readers
-  const announcement = document.createElement('div');
-  announcement.setAttribute('aria-live', 'polite');
-  announcement.textContent = 'Portrait generated! Download below.';
-  genBtn.parentNode.appendChild(announcement); // Temp; remove after 5s if needed
-  setTimeout(() => announcement.remove(), 5000);
-
-  console.log('Portrait generated: Procedural xAI avatar'); // Debug
+  
+  console.log('Generated 3 portrait attempts from inputs');
 });
+
+// Fallback: Simple canvas draw if API fails
+function createFallback(char, size) {
+  const img = document.createElement('canvas');
+  img.width = img.height = size;
+  const fCtx = img.getContext('2d');
+  fCtx.fillStyle = '#00D4FF';
+  fCtx.beginPath();
+  fCtx.arc(size/2, size/2, size/2, 0, 2 * Math.PI);
+  fCtx.fill();
+  fCtx.fillStyle = '#000';
+  fCtx.font = `${size/4}px Inter`;
+  fCtx.textAlign = 'center';
+  fCtx.fillText(char, size/2, size/2 + size/8);
+  return img;
+}
 
 // Perf: Preload check (optional PWA stub – expand later)
 if ('serviceWorker' in navigator) {
