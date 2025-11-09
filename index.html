@@ -47,10 +47,23 @@
   <section class="rewards" aria-label="Free xAI Portrait Generator">
     <div class="container">
       <h2>Claim Your Reward</h2>
-      <p>Generate a free cosmic portrait – inspired by xAI. Download & share!</p>
-      <button id="genPortrait" aria-label="Generate and download portrait" aria-live="polite">Generate Portrait 🎨</button>
-      <canvas id="portraitCanvas" class="hidden" aria-hidden="true" width="300" height="300"></canvas> <!-- Hidden from screen readers; visual only -->
-      <a id="downloadLink" class="hidden" download="bowalka-xai-portrait.png" aria-label="Download generated portrait">Download</a>
+      <form id="inputForm" aria-label="Portrait inputs">
+        <label for="nameInput">Name:</label>
+        <input type="text" id="nameInput" required aria-required="true" placeholder="e.g., Bowalka">
+
+        <label for="ageInput">Age:</label>
+        <input type="number" id="ageInput" min="1" max="150" required aria-required="true" placeholder="e.g., 30">
+
+        <label for="colorInput">Fav Color:</label>
+        <input type="text" id="colorInput" required aria-required="true" placeholder="e.g., blue">
+
+        <button type="submit" id="genPortrait">Generate Portraits 🎨</button>
+      </form>
+      <div id="thumbsContainer" class="thumbs-grid hidden" aria-label="Select best portrait">
+        <!-- JS populates: 3 thumbs -->
+      </div>
+      <canvas id="portraitCanvas" class="hidden" width="300" height="300"></canvas>
+      <a id="downloadLink" class="hidden" download="bowalka-xai-portrait.png">Download Selected</a>
     </div>
   </section>
   
